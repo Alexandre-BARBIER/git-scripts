@@ -1,6 +1,6 @@
 # GitLab Group Repository Cloner
 
-This repository contains scripts to clone all repositories from a GitLab group and its subgroups while maintaining the folder structure locally.
+A bash script to clone all repositories from a GitLab group and its subgroups while maintaining the folder structure locally.
 
 ## Features
 
@@ -11,27 +11,18 @@ This repository contains scripts to clone all repositories from a GitLab group a
 - 🛡️ Handles API pagination automatically
 - 🎯 Avoids duplicate cloning of the same repository
 - 📊 Provides detailed progress feedback
+- 🔐 Supports both SSH and HTTPS cloning
+- 🎛️ Two modes: API Discovery and Manual Mode
 
 ## Prerequisites
 
-### For Python version
-- Python 3.6+
-- `requests` library
-- `git` command available in PATH
-
-### For Bash version
+- `bash` shell
 - `curl` command
 - `jq` command (JSON processor)
 - `git` command available in PATH
 
 ## Installation
 
-### Python version
-```bash
-pip install -r requirements.txt
-```
-
-### Bash version
 ```bash
 # Ubuntu/Debian
 sudo apt-get install curl jq git
@@ -45,73 +36,77 @@ chmod +x clone_gitlab_group.sh
 
 ## GitLab Access Token
 
-You need a GitLab access token with `read_api` permissions:
+For API Discovery mode, you need a GitLab access token with `read_api` permissions:
 
 1. Go to your GitLab instance → User Settings → Access Tokens
 2. Create a new token with `read_api` scope
 3. Copy the token (starts with `glpat-`)
 
+**Note**: Manual mode can work without a token when using SSH cloning.
+
 ## Usage
 
-### Python version
+The script supports two modes:
 
-```bash
-python clone_gitlab_group.py --group-id <group_id> --token <access_token> [options]
-```
+### 1. API Discovery Mode (Default)
 
-**Options:**
-- `--group-id`: GitLab group ID or path (required)
-- `--token`: GitLab access token (required)
-- `--base-url`: GitLab instance URL (default: https://gitlab.com)
-- `--output-dir`: Output directory (default: ./gitlab-repositories)
-
-**Examples:**
-```bash
-# Clone from gitlab.com
-python clone_gitlab_group.py --group-id mygroup --token glpat-xxxxxxxxxxxx
-
-# Clone from custom GitLab instance
-python clone_gitlab_group.py --group-id mygroup --token glpat-xxxxxxxxxxxx --base-url https://gitlab.example.com
-
-# Clone to specific directory
-python clone_gitlab_group.py --group-id parent/subgroup --token glpat-xxxxxxxxxxxx --output-dir ./my-repos
-```
-
-### Bash version
+Automatically discovers all repositories using the GitLab API:
 
 ```bash
 ./clone_gitlab_group.sh -g <group_id> -t <token> [options]
 ```
 
-**Options:**
+### 2. Manual Mode
+
+Clone specific repositories without API discovery:
+
+```bash
+./clone_gitlab_group.sh -g <group_id> --manual-mode [options]
+```
+
+### Options
+
 - `-g, --group-id`: GitLab group ID or path (required)
-- `-t, --token`: GitLab access token (required)
+- `-t, --token`: GitLab access token (required for API mode, optional for manual mode)
 - `-u, --url`: GitLab instance URL (default: https://gitlab.com)
-- `-o, --output-dir`: Output directory (default: ./gitlab-repositories)
+- `-o, --output-dir`: Output directory (default: current directory)
+- `--https`: Use HTTPS for git operations instead of SSH
+- `--manual-mode`: Skip API discovery, manually specify repositories
 - `-h, --help`: Show help message
 
-**Examples:**
+### Examples
+
 ```bash
-# Clone from gitlab.com
+# API Discovery mode - clone all repositories
 ./clone_gitlab_group.sh -g mygroup -t glpat-xxxxxxxxxxxx
 
-# Clone from custom GitLab instance
-./clone_gitlab_group.sh -g mygroup -t glpat-xxxxxxxxxxxx -u https://gitlab.example.com
+# API Discovery mode with custom GitLab instance
+./clone_gitlab_group.sh -g mygroup -t glpat-xxxxxxxxxxxx -u https://gitlab.example.com -o ./repos
 
-# Clone to specific directory
-./clone_gitlab_group.sh -g parent/subgroup -t glpat-xxxxxxxxxxxx -o ./my-repos
+# Manual mode with SSH (no token needed)
+./clone_gitlab_group.sh -g mygroup --manual-mode
+
+# Manual mode with HTTPS
+./clone_gitlab_group.sh -g mygroup --manual-mode --https -t glpat-xxxxxxxxxxxx
 ```
 
 ## How it works
 
-1. **Group Discovery**: The script starts with the specified group and recursively discovers all subgroups
-2. **Repository Enumeration**: For each group, it fetches all repositories (projects)
-3. **Folder Structure**: Creates local folders that mirror the GitLab group structure
-4. **Smart Cloning**: 
+### API Discovery Mode
+1. **API Connection**: Tests connection to GitLab API with provided token
+2. **Group Discovery**: Recursively discovers all subgroups starting from the specified group
+3. **Repository Enumeration**: For each group, fetches all repositories (projects) via API
+4. **Folder Structure**: Creates local folders that mirror the GitLab group structure
+5. **Smart Cloning**: 
    - Clones new repositories
    - Updates existing repositories with `git pull`
    - Skips archived repositories
    - Avoids duplicate processing
+
+### Manual Mode
+1. **User Input**: Prompts user to enter repository paths manually
+2. **Repository Cloning**: Clones each specified repository without API discovery
+3. **Flexible Authentication**: Works with SSH keys (no token needed) or HTTPS with token
 
 ## Example Output Structure
 
@@ -130,7 +125,7 @@ myorg/
 
 The script will create:
 ```
-./gitlab-repositories/
+./output-directory/
 └── myorg/
     ├── backend/
     │   ├── api-service/
@@ -142,20 +137,39 @@ The script will create:
         └── terraform/
 ```
 
+## Authentication Methods
+
+### SSH (Default)
+- Uses SSH keys for authentication
+- No token required for git operations
+- Requires SSH key setup with your GitLab instance
+
+### HTTPS
+- Uses HTTPS for git operations
+- May require token for authentication
+- Specify with `--https` flag
+
 ## Security Notes
 
 - Store your GitLab token securely
 - Use environment variables instead of command line arguments for tokens in production
-- Consider using SSH keys for git operations
+- SSH keys are recommended for secure, passwordless authentication
+- Ensure SSH agent is running with your key loaded
 
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Authentication Error**: Verify your token has `read_api` permissions
+1. **Authentication Error**: 
+   - Verify your token has `read_api` permissions
+   - For SSH, ensure SSH keys are set up and SSH agent is running
 2. **Network Error**: Check your GitLab URL and network connectivity
 3. **Permission Denied**: Ensure you have access to the group and its repositories
-4. **Git Clone Fails**: Check if you have SSH keys set up for your GitLab instance
+4. **Git Clone Fails**: 
+   - For SSH: Check if SSH keys are configured for your GitLab instance
+   - For HTTPS: Verify token permissions
+5. **jq not found**: Install jq with `sudo apt-get install jq` or `brew install jq`
+6. **curl not found**: Install curl with your system package manager
 
 ### Environment Variables
 
@@ -170,8 +184,17 @@ export OUTPUT_DIR="./repositories"
 
 Then run:
 ```bash
-python clone_gitlab_group.py --group-id $GITLAB_GROUP_ID --token $GITLAB_TOKEN --base-url $GITLAB_URL --output-dir $OUTPUT_DIR
+./clone_gitlab_group.sh -g "$GITLAB_GROUP_ID" -t "$GITLAB_TOKEN" -u "$GITLAB_URL" -o "$OUTPUT_DIR"
 ```
+
+### SSH Key Setup
+
+For SSH authentication (recommended):
+
+1. Generate SSH key: `ssh-keygen -t ed25519 -C "your_email@example.com"`
+2. Add key to SSH agent: `ssh-add ~/.ssh/id_ed25519`
+3. Add public key to GitLab: Copy `~/.ssh/id_ed25519.pub` to GitLab → Settings → SSH Keys
+4. Test connection: `ssh -T git@gitlab.com`
 
 ## Contributing
 
