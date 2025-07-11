@@ -1,205 +1,159 @@
-# GitLab Group Repository Cloner
+# Git Scripts Collection
 
-A bash script to clone all repositories from a GitLab group and its subgroups while maintaining the folder structure locally.
+A collection of useful Git automation scripts and tools to streamline your Git workflow. Each script is fully self-contained and can be used independently.
 
-## Features
+## 🚀 Available Scripts
 
-- 🔄 Recursively clones all repositories from a GitLab group and its subgroups
-- 📁 Maintains the original folder structure locally
+### 📁 [GitLab Group Cloner](./gitlab-group-cloner/)
+A powerful bash script to clone all repositories from a GitLab group and its subgroups while maintaining the folder structure locally.
+
+**Features:**
+- 🔄 Recursively clones all repositories from GitLab groups and subgroups
+- 📁 Maintains original folder structure locally
 - 🔄 Updates existing repositories instead of re-cloning
 - 🚫 Skips archived repositories
 - 🛡️ Handles API pagination automatically
-- 🎯 Avoids duplicate cloning of the same repository
-- 📊 Provides detailed progress feedback
 - 🔐 Supports both SSH and HTTPS cloning
 - 🎛️ Two modes: API Discovery and Manual Mode
 
-## Prerequisites
+**Quick Start:**
+```bash
+cd gitlab-group-cloner
+./clone_gitlab_group.sh -g <group_id> -t <token>
+```
 
+### 🛡️ [Pre-Push Protection Hook](./pre-push-protection/)
+A Git pre-push hook that prevents accidental pushes to the default branch by requiring explicit confirmation.
+
+**Features:**
+- 🛡️ Automatic default branch detection (main/master/etc.)
+- 🎯 Smart caching to avoid repeated remote calls
+- ⚠️ Clear warning messages with confirmation prompts
+- 🌍 Locale-independent operation
+- 🔄 Works with multiple remotes
+
+**Quick Start:**
+```bash
+cd pre-push-protection
+cp pre-push /path/to/your/repo/.git/hooks/
+chmod +x /path/to/your/repo/.git/hooks/pre-push
+```
+
+## 🛠️ Installation
+
+### Prerequisites
+Most scripts require these common tools:
 - `bash` shell
+- `git` command
 - `curl` command
 - `jq` command (JSON processor)
-- `git` command available in PATH
 
-## Installation
-
+### Ubuntu/Debian
 ```bash
-# Ubuntu/Debian
 sudo apt-get install curl jq git
+```
 
-# macOS
+### macOS
+```bash
 brew install curl jq git
-
-# Make script executable
-chmod +x clone_gitlab_group.sh
 ```
 
-## GitLab Access Token
-
-For API Discovery mode, you need a GitLab access token with `read_api` permissions:
-
-1. Go to your GitLab instance → User Settings → Access Tokens
-2. Create a new token with `read_api` scope
-3. Copy the token (starts with `glpat-`)
-
-**Note**: Manual mode can work without a token when using SSH cloning.
-
-## Usage
-
-The script supports two modes:
-
-### 1. API Discovery Mode (Default)
-
-Automatically discovers all repositories using the GitLab API:
-
+### Make Scripts Executable
 ```bash
-./clone_gitlab_group.sh -g <group_id> -t <token> [options]
+find . -name "*.sh" -type f -exec chmod +x {} \;
 ```
 
-### 2. Manual Mode
+## 📋 Usage
 
-Clone specific repositories without API discovery:
+Each script has its own directory with detailed documentation. Navigate to the specific script folder and read its README for detailed usage instructions.
 
-```bash
-./clone_gitlab_group.sh -g <group_id> --manual-mode [options]
+## 🤝 Contributing
+
+We welcome contributions! Here's how you can help:
+
+1. **Add New Scripts**: Create a new folder for your script with:
+   - The script file(s)
+   - A detailed README.md
+   - Any necessary configuration files
+
+2. **Improve Existing Scripts**: 
+   - Fix bugs
+   - Add new features
+   - Improve documentation
+
+3. **Documentation**: Help improve READMEs and add examples
+
+### Script Structure Guidelines
+
+When adding a new script, please follow this structure:
+```
+script-name/
+├── README.md           # Detailed documentation
+├── script-name.sh      # Main script file (fully self-contained)
+├── config/            # Configuration files (if needed)
+└── examples/          # Usage examples (if applicable)
 ```
 
-### Options
+**Important**: Each script should be fully self-contained with all necessary functions and utilities included within the script file itself.
 
-- `-g, --group-id`: GitLab group ID or path (required)
-- `-t, --token`: GitLab access token (required for API mode, optional for manual mode)
-- `-u, --url`: GitLab instance URL (default: https://gitlab.com)
-- `-o, --output-dir`: Output directory (default: current directory)
-- `--https`: Use HTTPS for git operations instead of SSH
-- `--manual-mode`: Skip API discovery, manually specify repositories
-- `-h, --help`: Show help message
+### Pull Request Process
 
-### Examples
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-script`)
+3. Commit your changes (`git commit -m 'Add amazing Git script'`)
+4. Push to the branch (`git push origin feature/amazing-script`)
+5. Open a Pull Request
 
-```bash
-# API Discovery mode - clone all repositories
-./clone_gitlab_group.sh -g mygroup -t glpat-xxxxxxxxxxxx
+## 📝 Script Ideas
 
-# API Discovery mode with custom GitLab instance
-./clone_gitlab_group.sh -g mygroup -t glpat-xxxxxxxxxxxx -u https://gitlab.example.com -o ./repos
+Looking for inspiration? Here are some useful Git scripts that could be added:
 
-# Manual mode with SSH (no token needed)
-./clone_gitlab_group.sh -g mygroup --manual-mode
+- **Branch Cleanup**: Remove merged branches automatically
+- **Commit Message Validator**: Ensure commit messages follow conventions
+- **Repository Backup**: Backup repositories to multiple locations
+- **Git Hooks Manager**: Install and manage Git hooks across projects
+- **Pull Request Creator**: Automate PR creation with templates
+- **Release Manager**: Automate version tagging and releases
+- **Repository Statistics**: Generate reports on repository activity
+- **Batch Operations**: Perform operations across multiple repositories
+- **Git Flow Automation**: Automate Git Flow workflows
+- **Submodule Manager**: Manage Git submodules efficiently
 
-# Manual mode with HTTPS
-./clone_gitlab_group.sh -g mygroup --manual-mode --https -t glpat-xxxxxxxxxxxx
-```
+## 📖 Best Practices
 
-## How it works
+When writing Git scripts:
 
-### API Discovery Mode
-1. **API Connection**: Tests connection to GitLab API with provided token
-2. **Group Discovery**: Recursively discovers all subgroups starting from the specified group
-3. **Repository Enumeration**: For each group, fetches all repositories (projects) via API
-4. **Folder Structure**: Creates local folders that mirror the GitLab group structure
-5. **Smart Cloning**: 
-   - Clones new repositories
-   - Updates existing repositories with `git pull`
-   - Skips archived repositories
-   - Avoids duplicate processing
+1. **Self-Contained**: Each script should include all necessary functions and utilities
+2. **Error Handling**: Always handle errors gracefully
+3. **Documentation**: Include clear usage instructions and examples
+4. **Configuration**: Make scripts configurable via command line arguments and/or config files
+5. **Safety**: Include dry-run modes for destructive operations
+6. **Compatibility**: Test on multiple platforms when possible
+7. **Dependencies**: Clearly document all dependencies
+8. **Security**: Handle credentials securely (use environment variables, tokens, etc.)
 
-### Manual Mode
-1. **User Input**: Prompts user to enter repository paths manually
-2. **Repository Cloning**: Clones each specified repository without API discovery
-3. **Flexible Authentication**: Works with SSH keys (no token needed) or HTTPS with token
+## 🐛 Issues and Support
 
-## Example Output Structure
+If you encounter issues:
 
-If you have a GitLab group structure like:
-```
-myorg/
-├── backend/
-│   ├── api-service (repository)
-│   └── auth-service (repository)
-├── frontend/
-│   ├── web-app (repository)
-│   └── mobile-app (repository)
-└── infrastructure/
-    └── terraform (repository)
-```
+1. Check the specific script's README for troubleshooting
+2. Search existing issues
+3. Create a new issue with:
+   - Script name and version
+   - Operating system
+   - Error messages
+   - Steps to reproduce
 
-The script will create:
-```
-./output-directory/
-└── myorg/
-    ├── backend/
-    │   ├── api-service/
-    │   └── auth-service/
-    ├── frontend/
-    │   ├── web-app/
-    │   └── mobile-app/
-    └── infrastructure/
-        └── terraform/
-```
+## 📄 License
 
-## Authentication Methods
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-### SSH (Default)
-- Uses SSH keys for authentication
-- No token required for git operations
-- Requires SSH key setup with your GitLab instance
+## 🌟 Acknowledgments
 
-### HTTPS
-- Uses HTTPS for git operations
-- May require token for authentication
-- Specify with `--https` flag
+- Thanks to all contributors who help make Git workflows easier
+- Inspired by the Git community's automation efforts
+- Built with ❤️ for developers who love efficient workflows
 
-## Security Notes
+---
 
-- Store your GitLab token securely
-- Use environment variables instead of command line arguments for tokens in production
-- SSH keys are recommended for secure, passwordless authentication
-- Ensure SSH agent is running with your key loaded
-
-## Troubleshooting
-
-### Common Issues
-
-1. **Authentication Error**: 
-   - Verify your token has `read_api` permissions
-   - For SSH, ensure SSH keys are set up and SSH agent is running
-2. **Network Error**: Check your GitLab URL and network connectivity
-3. **Permission Denied**: Ensure you have access to the group and its repositories
-4. **Git Clone Fails**: 
-   - For SSH: Check if SSH keys are configured for your GitLab instance
-   - For HTTPS: Verify token permissions
-5. **jq not found**: Install jq with `sudo apt-get install jq` or `brew install jq`
-6. **curl not found**: Install curl with your system package manager
-
-### Environment Variables
-
-You can set these environment variables instead of command line arguments:
-
-```bash
-export GITLAB_TOKEN="glpat-xxxxxxxxxxxx"
-export GITLAB_URL="https://gitlab.example.com"
-export GITLAB_GROUP_ID="mygroup"
-export OUTPUT_DIR="./repositories"
-```
-
-Then run:
-```bash
-./clone_gitlab_group.sh -g "$GITLAB_GROUP_ID" -t "$GITLAB_TOKEN" -u "$GITLAB_URL" -o "$OUTPUT_DIR"
-```
-
-### SSH Key Setup
-
-For SSH authentication (recommended):
-
-1. Generate SSH key: `ssh-keygen -t ed25519 -C "your_email@example.com"`
-2. Add key to SSH agent: `ssh-add ~/.ssh/id_ed25519`
-3. Add public key to GitLab: Copy `~/.ssh/id_ed25519.pub` to GitLab → Settings → SSH Keys
-4. Test connection: `ssh -T git@gitlab.com`
-
-## Contributing
-
-Feel free to submit issues and enhancement requests!
-
-## License
-
-This project is licensed under the MIT License.
+**Happy Git scripting!** 🎉
